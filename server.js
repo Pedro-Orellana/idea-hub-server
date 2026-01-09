@@ -5,8 +5,9 @@ import cors from "cors";
 import authRouter from "./routes/auth.js";
 import ideaRouter from "./routes/ideas.js";
 
-//import db connection function
+//other imports
 import { connectDB } from "./config/db.js";
+import { ErrorHandler } from "./middleware/ErrorHandler.js";
 
 const PORT = 3000;
 
@@ -25,6 +26,9 @@ app.use(express.json());
 //using custom routers
 app.use("/auth", authRouter);
 app.use("/ideas", ideaRouter);
+
+//custom error handler. ALWAYS DEFINE LAST
+app.use(ErrorHandler);
 
 //make the server listen on a port
 app.listen(PORT, () => {

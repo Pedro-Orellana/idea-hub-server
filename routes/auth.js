@@ -25,8 +25,11 @@ authRouter.post("/register", async (req, res, next) => {
 
     //create new user
     const newUser = await User.create({ name, email, password });
-    const accessToken = generateToken(newUser._id, "1m");
-    const refreshToken = generateToken(newUser._id, "30d");
+
+    const tokenPayload = { userId: newUser._id.toString() };
+
+    const accessToken = await generateToken(tokenPayload, "1m");
+    const refreshToken = await generateToken(tokenPayload, "30d");
 
     //send the refreshToken as a cookie
     res.cookie("refreshToken", refreshToken, {
@@ -52,6 +55,7 @@ authRouter.post("/register", async (req, res, next) => {
 //user login function
 authRouter.post("/login", async (req, res, next) => {
   const { email, password } = req.body;
+  console.log(password);
 
   try {
     //make sure all data is passed to the request
@@ -76,8 +80,10 @@ authRouter.post("/login", async (req, res, next) => {
     //this is where we get information from database
     //send access token
 
-    const accessToken = generateToken(user._id, "1m");
-    const refreshToken = generateToken(user._id, "30d");
+    const tokenPayload = { userId: user._id.toString() };
+
+    const accessToken = await generateToken(tokenPayload, "1m");
+    const refreshToken = await generateToken(tokenPayload, "30d");
 
     //set refresh token in an http only cookie
     res.cookie("refreshToken", refreshToken, {

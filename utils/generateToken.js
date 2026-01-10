@@ -3,6 +3,7 @@ import { JwtSecret } from "./getJWTSecret.js";
 
 export const generateToken = async (payload, expiresIn = "15m") => {
   const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(expiresIn)
     .sign(JwtSecret);

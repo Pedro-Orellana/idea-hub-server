@@ -1,5 +1,6 @@
 import express from "express";
 import User from "../models/User.js";
+import { generateToken } from "../utils/generateToken.js";
 
 const authRouter = express.Router();
 
@@ -24,8 +25,19 @@ authRouter.post("/register", async (req, res, next) => {
 
     //create new user
     const newUser = await User.create({ name, email, password });
-    //TODO(create the tokens and pass them)
+    const accessToken = generateToken(newUser._id, "1m");
+    const refreshToken = generateToken(newUser._id, "30d");
+
+    //send the refreshToken as a cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
     res.status(201).json({
+      accessToken,
       user: {
         id: newUser._id,
         name: newUser.name,
@@ -63,7 +75,20 @@ authRouter.post("/login", async (req, res, next) => {
     }
     //this is where we get information from database
     //send access token
+
+    const accessToken = generateToken(user._id, "1m");
+    const refreshToken = generateToken(user._id, "30d");
+
+    //set refresh token in an http only cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // days
+    });
+
     res.status(200).json({
+      accessToken,
       user: {
         id: user._id,
         name: user.name,

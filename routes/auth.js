@@ -1,6 +1,8 @@
 import express from "express";
 import User from "../models/User.js";
 import { generateToken } from "../utils/generateToken.js";
+import { jwtVerify } from "jose";
+import { JwtSecret } from "../utils/getJWTSecret.js";
 
 const authRouter = express.Router();
 
@@ -55,8 +57,6 @@ authRouter.post("/register", async (req, res, next) => {
 //user login function
 authRouter.post("/login", async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(password);
-
   try {
     //make sure all data is passed to the request
     if (!email || !password) {
@@ -99,6 +99,57 @@ authRouter.post("/login", async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+//logout function
+authRouter.post("/logout", (req, res) => {
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  });
+
+  res.status(200).json({
+    message: "Logged out successfully",
+  });
+});
+
+//refresh token function
+authRouter.post("/refresh", async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      res.status(403);
+      throw new Error("No refresh token found");
+    }
+
+    //get userId from refresh token
+    const { payload } = await jwtVerify(refreshToken, JwtSecret);
+    const userId = payload.userId;
+
+    //get user from userId
+    const foundUser = await User.findById(userId);
+    if (!foundUser) {
+      res.status(404);
+      throw new Error("User does not exist");
+    }
+
+    //create new access token with the found user
+    const newPayload = { userId: foundUser._id.toString() };
+    const newToken = await generateToken(newPayload, "1m");
+
+    res.status(200).json({
+      accessToken: newToken,
+      user: {
+        id: foundUser._id,
+        name: foundUser.name,
+        email: foundUser.email,
       },
     });
   } catch (err) {

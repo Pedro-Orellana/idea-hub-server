@@ -7,7 +7,7 @@ import ideaRouter from "./routes/ideas.js";
 
 //other imports
 import { connectDB } from "./config/db.js";
-import { ErrorHandler } from "./middleware/ErrorHandler.js";
+import { ErrorHandler } from "./middleware/errorHandler.js";
 
 const PORT = 3000;
 

@@ -8,7 +8,7 @@ export const protect = async (req, res, next) => {
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       //no authorization header, throw an error
-      res.status(403); //unauthorized
+      res.status(401); //unauthorized
       throw new Error("Not authorized to get this content");
     }
 
@@ -22,7 +22,7 @@ export const protect = async (req, res, next) => {
     const user = await User.findById(payload.userId).select("_id name email");
 
     if (!user) {
-      res.status(403); //unauthorized
+      res.status(401); //unauthorized
       throw new Error("User not found");
     }
 
@@ -30,7 +30,7 @@ export const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    res.status(403);
+    res.status(401); //unauthorized
     throw new Error("Unabled to authorize");
   }
 };

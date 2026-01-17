@@ -20,7 +20,12 @@ connectDB();
 const allowedOrigins = ["http://localhost:5173"];
 
 //neccessary middleware
-app.use(cors(allowedOrigins));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 //using custom routers

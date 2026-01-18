@@ -33,6 +33,24 @@ ideaRouter.post("/", protect, async (req, res, next) => {
 });
 
 //get all ideas function. Only for authorized users
-ideaRouter.get("/", protect, async (req, res) => {});
+ideaRouter.get("/", protect, async (req, res) => {
+  try {
+    const limit = parseInt(req.query._limit);
+
+    //get all ideas, sorted from the newest one to the oldest one
+    const allIdeasQuery = Idea.find().sort({ createdAt: -1 });
+
+    //apply the limit to the query
+    if (!isNaN(limit)) {
+      allIdeasQuery.limit(limit);
+    }
+
+    const ideas = await allIdeasQuery.exec();
+    res.status(200).json(ideas);
+  } catch (err) {
+    res.status(500); //internal error
+    throw new Error("Something went wrong and could not get all ideas");
+  }
+});
 
 export default ideaRouter;

@@ -8,6 +8,7 @@ import ideaRouter from "./routes/ideas.js";
 //other imports
 import { connectDB } from "./config/db.js";
 import { ErrorHandler } from "./middleware/errorHandler.js";
+import cookieParser from "cookie-parser";
 
 const PORT = 3000;
 
@@ -27,6 +28,8 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 //using custom routers
 app.use("/auth", authRouter);

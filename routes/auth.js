@@ -36,9 +36,11 @@ authRouter.post("/register", async (req, res, next) => {
     //send the refreshToken as a cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      // secure: process.env.NODE_ENV === "production",
+      // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
     res.status(201).json({
@@ -88,8 +90,10 @@ authRouter.post("/login", async (req, res, next) => {
     //set refresh token in an http only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
+      sameSite: "lax",
+      // secure: process.env.NODE_ENV === "production",
+      // sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
@@ -122,20 +126,27 @@ authRouter.post("/logout", (req, res) => {
 //refresh token function
 authRouter.post("/refresh", async (req, res, next) => {
   try {
+    //console.log(req);
     const refreshToken = req.cookies?.refreshToken;
+    console.log("hitting refresh endpoint");
+    console.log(`cookies: ${req.cookies}`);
+    console.log(`refresh token: ${refreshToken}`);
 
     if (!refreshToken) {
+      console.log("refresh token seems to not exist");
       res.status(403);
       throw new Error("No refresh token found");
     }
 
     //get userId from refresh token
     const { payload } = await jwtVerify(refreshToken, JwtSecret);
+    console.log(`found payload ${payload}`);
     const userId = payload.userId;
 
     //get user from userId
     const foundUser = await User.findById(userId);
     if (!foundUser) {
+      console.log("could not find user with token for some reason");
       res.status(404);
       throw new Error("User does not exist");
     }
@@ -143,6 +154,8 @@ authRouter.post("/refresh", async (req, res, next) => {
     //create new access token with the found user
     const newPayload = { userId: foundUser._id.toString() };
     const newToken = await generateToken(newPayload, "1m");
+
+    console.log("Sending new token");
 
     res.status(200).json({
       accessToken: newToken,

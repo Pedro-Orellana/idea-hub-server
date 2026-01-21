@@ -1,6 +1,7 @@
 import express from "express";
 import { protect } from "../middleware/authHandler.js";
 import Idea from "../models/Idea.js";
+import mongoose from "mongoose";
 
 const ideaRouter = express.Router();
 
@@ -50,6 +51,31 @@ ideaRouter.get("/", protect, async (req, res) => {
   } catch (err) {
     res.status(500); //internal error
     throw new Error("Something went wrong and could not get all ideas");
+  }
+});
+
+//get single idea function
+ideaRouter.get("/:ideaId", protect, async (req, res, next) => {
+  try {
+    const { ideaId } = req.params;
+
+    //check if ideaId is a valid id
+    if (!mongoose.Types.ObjectId.isValid(ideaId)) {
+      res.status(404); //not found
+      throw new Error("The idea you're looking for does not exist");
+    }
+
+    const idea = await Idea.findById(ideaId);
+
+    if (!idea) {
+      res.status(404); //not found
+      throw new Error("The idea you're looking for does not exist");
+    }
+
+    res.status(200).json(idea);
+  } catch (err) {
+    res.status(err.status);
+    throw new Error(err);
   }
 });
 

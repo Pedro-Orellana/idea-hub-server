@@ -98,7 +98,7 @@ ideaRouter.put("/:ideaId", protect, async (req, res) => {
     }
 
     //make sure the user is authorized to modify this idea
-    if (idea.userId !== req.user_id) {
+    if (idea.userId.toString() !== req.user._id.toString()) {
       res.status(403); //forbidden
       throw new Error("User does not have permission to modify this idea");
     }
@@ -123,6 +123,40 @@ ideaRouter.put("/:ideaId", protect, async (req, res) => {
   } catch (err) {
     res.status(err.status);
     throw new Error(err);
+  }
+});
+
+//function to delete a single idea
+ideaRouter.delete("/ideaId", protect, async (req, res, next) => {
+  try {
+    const { ideaId } = req.params;
+
+    //make sure the ideaId is valid
+    if (!mongoose.Types.ObjectId.isValid(ideaId)) {
+      res.status(404); //not found
+      throw new Error("Idea not found");
+    }
+
+    //find the idea
+    const idea = await Idea.findById(ideaId);
+    if (!idea) {
+      res.status(404); //not found
+      throw new Error("Idea not found");
+    }
+
+    //check if user has authorization to delete idea
+    if (idea.userId.toString() !== req.user._id.toString()) {
+      res.status(403); //forbidden
+      throw new Error("User is not authorized to delete this idea");
+    }
+
+    //delete idea
+    await idea.deleteOne();
+
+    res.status(200).json({ message: "idea deleted successfully!" });
+  } catch (err) {
+    console.log(err);
+    next(err);
   }
 });
 

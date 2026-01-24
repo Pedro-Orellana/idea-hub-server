@@ -79,4 +79,51 @@ ideaRouter.get("/:ideaId", protect, async (req, res, next) => {
   }
 });
 
+//function to edit a single idea
+ideaRouter.put("/:ideaId", protect, async (req, res) => {
+  try {
+    const { ideaId } = req.params;
+
+    //check if the ideaId is a valid object id
+    if (!mongoose.Types.ObjectId.isValid(ideaId)) {
+      res.status(404); //idea not found
+      throw new Error("Idea does not exist");
+    }
+
+    //get idea from ideaId
+    const idea = await Idea.findById(ideaId);
+    if (!idea) {
+      res.status(404); //idea not found
+      throw new Error("Idea does not exist");
+    }
+
+    //make sure the user is authorized to modify this idea
+    if (idea.userId !== req.user_id) {
+      res.status(403); //forbidden
+      throw new Error("User does not have permission to modify this idea");
+    }
+
+    //get data fields from request
+    const { title, summary, description, tags } = req.body;
+
+    if (!title || !summary || !description || !tags) {
+      res.status(400); //bad request
+      throw new Error("All data fields must be filled");
+    }
+
+    idea.title = title;
+    idea.summary = summary;
+    idea.description = description;
+    idea.tags = tags;
+
+    const updatedIdea = await idea.save();
+    res
+      .status(200) //ok
+      .json(updatedIdea);
+  } catch (err) {
+    res.status(err.status);
+    throw new Error(err);
+  }
+});
+
 export default ideaRouter;

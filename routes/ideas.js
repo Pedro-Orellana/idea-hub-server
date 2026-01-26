@@ -54,6 +54,25 @@ ideaRouter.get("/", protect, async (req, res) => {
   }
 });
 
+//get a user's latest 3 ideas
+ideaRouter.get("/latest", protect, async (req, res) => {
+  try {
+    //get user's id
+    const userId = req.user._id;
+
+    //create a query
+    const ideaQuery = Idea.find({ userId }).sort({ createdAt: -1 }).limit(3);
+
+    //execute query and get ideas
+    const latestIdeas = await ideaQuery.exec();
+
+    res.status(200).json(latestIdeas);
+  } catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
+});
+
 //get single idea function
 ideaRouter.get("/:ideaId", protect, async (req, res, next) => {
   try {
@@ -127,7 +146,7 @@ ideaRouter.put("/:ideaId", protect, async (req, res) => {
 });
 
 //function to delete a single idea
-ideaRouter.delete("/ideaId", protect, async (req, res, next) => {
+ideaRouter.delete("/:ideaId", protect, async (req, res, next) => {
   try {
     const { ideaId } = req.params;
 
